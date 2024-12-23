@@ -42,7 +42,7 @@ export default function SignIn() {
             
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
               <IconButton
-                onClick={() => signIn('github', { callbackUrl: '/' })}
+                onClick={() => signIn('github', { callbackUrl: '/dashboard' })}
                 sx={{
                   width: 56,
                   height: 56,
@@ -58,7 +58,7 @@ export default function SignIn() {
               </IconButton>
 
               <IconButton
-                onClick={() => signIn('google', { callbackUrl: '/' })}
+                onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
                 sx={{
                   width: 56,
                   height: 56,
@@ -74,7 +74,7 @@ export default function SignIn() {
               </IconButton>
 
               <IconButton
-                onClick={() => signIn('apple', { callbackUrl: '/' })}
+                onClick={() => signIn('apple', { callbackUrl: '/dashboard' })}
                 sx={{
                   width: 56,
                   height: 56,

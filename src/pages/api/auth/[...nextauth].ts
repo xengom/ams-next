@@ -7,8 +7,10 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+const adapter = PrismaAdapter(prisma)
+
 export default NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter,
   providers: [
     GithubProvider({
       clientId: process.env.GITHUB_ID!,
@@ -33,6 +35,12 @@ export default NextAuth({
       }
       return session
     },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/dashboard`
+      }
+      return url
+    }
   },
   session: {
     strategy: 'jwt',
