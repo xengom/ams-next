@@ -2,6 +2,15 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  }
+    "source.fixAll.eslint": "explicit"
+},
+"sqltools.connections": [
+    {
+        "previewLimit": 50,
+        "server": "localhost",
+        "driver": "PostgreSQL",
+        "name": "ams-local",
+        "connectString": "postgresql://dec:Abraham1!@localhost:5432/ams?schema=public"
+    }
+]
 } 

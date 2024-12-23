@@ -79,15 +79,16 @@ model TransactionRecord {
 }
 
 model DailyRecord {
-  id          Int      @id @default(autoincrement())
-  date        DateTime
-  totalValue  Float    // 전체 자산 가치
-  cashValue   Float    // 현금성 자산
-  stockValue  Float    // 주식 가치
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  totalValue   Float    // 전체 자산 가치
+  totalPercent Float    // 전체 수익률
+  cashValue    Float    // 현금성 자산
+  stockValue   Float    // 주식 가치
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([userId, date])
 }

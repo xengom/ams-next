@@ -6,7 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pm2:stop": "pm2 stop ams",
+    "pm2:restart": "pm2 restart ams",
+    "pm2:delete": "pm2 delete ams",
+    "pm2:logs": "pm2 logs ams",
+    "pm2:dev": "pnpm build && pm2 start ecosystem.config.js --env development",
+    "pm2:prod": "pnpm build && pm2 start ecosystem.config.js --env production"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
