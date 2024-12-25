@@ -16,6 +16,8 @@ model User {
   password      String?
   provider      String?
   providerId    String?
+  accounts      Account[]
+  sessions      Session[]
   portfolios    Portfolio[]     // 포트폴리오
   investments   InvestRecord[]  // 투자 기록
   incomes       IncomeRecord[]  // 수입 기록
@@ -26,6 +28,40 @@ model User {
   lastLogin     DateTime        @default(now())
 
   @@unique([provider, providerId])
+}
+model Account {
+  id                String  @id @default(cuid())
+  userId            Int     // Int로 변경
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int      // Int로 변경
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Portfolio {
