@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, Typography, Box, Switch } from '@mui/material';
 import { useRouter } from 'next/router';
 
@@ -10,27 +10,34 @@ interface Portfolio {
   totalReturn: number;
 }
 
-export default function PortfolioCard({ portfolio }: { portfolio: Portfolio }) {
+export default function PortfolioCard({
+  portfolio,
+  onToggle,
+}: {
+  portfolio: Portfolio;
+  onToggle: (id: number, checked: boolean) => void;
+}) {
   const router = useRouter();
+  const [checked, setChecked] = useState(true);
 
   const handleClick = () => {
     router.push(`/portfolio/${portfolio.id}`);
   };
 
+  const handleToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
+    onToggle(portfolio.id, event.target.checked);
+  };
+
   return (
-    <Card onClick={handleClick} sx={{ cursor: 'pointer' }}>
+    <Card sx={{ cursor: 'pointer' }}>
       <CardContent>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box>
+          <Box onClick={handleClick}>
             <Typography variant="h6">{portfolio.name}</Typography>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-              {portfolio.description}
-            </Typography>
-            <Typography variant="body1">
-              평가금: ₩{portfolio.totalValue.toLocaleString()}
-            </Typography>
+            <Typography variant="body1">{portfolio.totalValue}</Typography>
             <Typography variant="body1" color={portfolio.totalReturn >= 0 ? 'error' : 'primary'}>
-              수익: ₩{portfolio.totalReturn.toLocaleString()} (+{' '}
+              Profit: ₩{portfolio.totalReturn} (+{' '}
               {(
                 (portfolio.totalReturn / (portfolio.totalValue - portfolio.totalReturn)) *
                 100
@@ -38,7 +45,7 @@ export default function PortfolioCard({ portfolio }: { portfolio: Portfolio }) {
               %)
             </Typography>
           </Box>
-          <Switch />
+          <Switch checked={checked} onChange={handleToggle} />
         </Box>
       </CardContent>
     </Card>

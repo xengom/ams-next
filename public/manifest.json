@@ -1,6 +1,6 @@
 {
-  "name": "Your App Name",
-  "short_name": "App Name",
+  "name": "AMS-Asset Management System",
+  "short_name": "AMS",
   "icons": [
     {
       "src": "/icon.png",

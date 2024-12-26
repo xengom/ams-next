@@ -8,19 +8,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const portfolio = await prisma.portfolio.findUnique({
-        where: { id: Number(id) },
-        include: { assets: true },
+      const assets = await prisma.asset.findMany({
+        where: { portfolioId: Number(id) },
       });
-
-      if (!portfolio) {
-        return res.status(404).json({ error: 'Portfolio not found' });
-      }
-
-      res.status(200).json(portfolio);
+      res.status(200).json(assets);
     } catch (error) {
-      console.error('Error fetching portfolio:', error);
-      res.status(500).json({ error: 'Failed to fetch portfolio' });
+      console.error('Error fetching assets:', error);
+      res.status(500).json({ error: 'Failed to fetch assets' });
     }
   } else {
     res.setHeader('Allow', ['GET']);

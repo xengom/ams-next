@@ -35,7 +35,7 @@ export default function BottomNav({
         router.push('/more');
         break;
     }
-  };    
+  };
 
   return (
     <BottomNavigation
@@ -46,11 +46,11 @@ export default function BottomNav({
       showLabels
       sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
     >
-      <BottomNavigationAction label="홈" icon={<HomeIcon />} />
-      <BottomNavigationAction label="트래킹" icon={<TrendingUpIcon />} />
-      <BottomNavigationAction label="내 자산" icon={<AccountBalanceWalletIcon />} />
-      <BottomNavigationAction label="채팅" icon={<ChatIcon />} />
-      <BottomNavigationAction label="더보기" icon={<MoreVertIcon />} />
+      <BottomNavigationAction label="Home" icon={<HomeIcon />} />
+      <BottomNavigationAction label="Tracking" icon={<TrendingUpIcon />} />
+      <BottomNavigationAction label="My Assets" icon={<AccountBalanceWalletIcon />} />
+      <BottomNavigationAction label="Chat" icon={<ChatIcon />} />
+      <BottomNavigationAction label="More" icon={<MoreVertIcon />} />
     </BottomNavigation>
   );
 }
