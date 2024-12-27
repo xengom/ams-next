@@ -1,33 +1,15 @@
-import { SessionProvider } from 'next-auth/react'
-import type { AppProps } from 'next/app'
-import { ThemeProvider, createTheme } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
-import Head from 'next/head'
+import { SessionProvider } from 'next-auth/react';
+import type { AppProps } from 'next/app';
+import { ConfigProvider } from 'antd';
+import { darkTheme } from '@/styles/theme';
+import '@/styles/globals.css';
 
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#1E90FF',
-    },
-    secondary: {
-      main: '#FFD700',
-    },
-  },
-})
-
-function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
     <SessionProvider session={session}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Head>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </Head>
+      <ConfigProvider theme={darkTheme}>
         <Component {...pageProps} />
-      </ThemeProvider>
+      </ConfigProvider>
     </SessionProvider>
-  )
+  );
 }
-
-export default MyApp

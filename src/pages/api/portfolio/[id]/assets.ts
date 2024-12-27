@@ -1,23 +1,37 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { withAuth } from '@/lib/api';
 
-const prisma = new PrismaClient();
+export default withAuth(async (req: NextApiRequest, res: NextApiResponse, session) => {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', ['GET']);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
 
-  if (req.method === 'GET') {
-    try {
-      const assets = await prisma.asset.findMany({
-        where: { portfolioId: Number(id) },
-      });
-      res.status(200).json(assets);
-    } catch (error) {
-      console.error('Error fetching assets:', error);
-      res.status(500).json({ error: 'Failed to fetch assets' });
-    }
-  } else {
-    res.setHeader('Allow', ['GET']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+  const portfolio = await prisma.portfolio.findFirst({
+    where: {
+      id: Number(id),
+      userId: session.user.id,
+    },
+  });
+
+  if (!portfolio) {
+    return res.status(404).json({ error: '포트폴리오를 찾을 수 없습니다' });
   }
-}
+
+  const assets = await prisma.asset.findMany({
+    where: { portfolioId: Number(id) },
+    include: {
+      latestPrice: true,
+      transactions: {
+        orderBy: {
+          date: 'desc',
+        },
+      },
+    },
+  });
+
+  return res.status(200).json(assets);
+});

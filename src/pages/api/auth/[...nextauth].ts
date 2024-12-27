@@ -1,13 +1,12 @@
-import NextAuth, { Account, Profile } from 'next-auth';
+import NextAuth, { AuthOptions } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
+import { Session } from 'next-auth';
 import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
-import AppleProvider from 'next-auth/providers/apple';
 import { PrismaAdapter } from '@auth/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
-
-export default NextAuth({
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GithubProvider({
@@ -19,44 +18,33 @@ export default NextAuth({
       clientSecret: process.env.GOOGLE_SECRET!,
     }),
   ],
-  pages: {
-    signIn: '/auth/signin',
-  },
   callbacks: {
-    async session({ session, token }) {
-      if (token.sub) {
-        session.user.id = Number(token.sub);
-      }
-      return session;
-    },
-    async redirect({ url, baseUrl }) {
-      if (url.startsWith('/')) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
-    },
-    async signIn({ account, profile, user }) {
-      // Check if the user already exists
+    async signIn({ user, account }) {
+      if (!user.email) return false;
+
+      // 이메일로 기존 사용자 찾기
       const existingUser = await prisma.user.findUnique({
-        where: { email: profile?.email! },
+        where: { email: user.email },
+        include: { accounts: true },
       });
 
       if (existingUser) {
-        // Link the account to the existing user
-        await prisma.account.upsert({
-          where: {
-            provider_providerAccountId: {
-              provider: account?.provider!,
-              providerAccountId: account?.providerAccountId!,
-            },
-          },
-          update: {
+        // 같은 provider로 이미 계정이 있는 경우
+        const existingAccount = existingUser.accounts.find(
+          (acc) => acc.provider === account?.provider
+        );
+
+        if (existingAccount) {
+          return true;
+        }
+
+        // 다른 provider로 계정이 있는 경우, 새 provider 계정 연결
+        await prisma.account.create({
+          data: {
             userId: existingUser.id,
-          },
-          create: {
-            userId: existingUser.id,
-            type: account?.type!,
-            provider: account?.provider!,
-            providerAccountId: account?.providerAccountId!,
+            type: account?.type || '',
+            provider: account?.provider || '',
+            providerAccountId: account?.providerAccountId || '',
             access_token: account?.access_token,
             refresh_token: account?.refresh_token,
             expires_at: account?.expires_at,
@@ -66,13 +54,37 @@ export default NextAuth({
             session_state: account?.session_state,
           },
         });
+
+        return true;
       }
 
       return true;
     },
+    async jwt({ token, user }: { token: JWT; user?: any }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }: { session: Session; token: JWT }) {
+      if (session?.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+    async redirect({ url, baseUrl }: { url: any; baseUrl: any }) {
+      return `${baseUrl}/dashboard`;
+    },
   },
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 30 * 60,
   },
-});
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+export default NextAuth(authOptions as any);

@@ -1,222 +1,151 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { Layout, Spin, Row, Col, message } from 'antd';
+import { ReloadOutlined, PlusOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
-import { useExchangeRate } from '../../hooks/useExchangeRate';
+import { CreatePortfolioDrawer } from '@/components/dashboard/CreatePortfolioDrawer';
 import {
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CircularProgress,
-  Box,
+  StyledContent,
+  StyledTitle,
+  StyledCard,
+  LoadingContainer,
+  TotalAmount,
+  ProfitAmount,
+  HeaderContainer,
+  ButtonContainer,
   IconButton,
-  Drawer,
-  TextField,
-  Button,
-  ButtonGroup,
-} from '@mui/material';
-import SyncIcon from '@mui/icons-material/Sync';
-import AddIcon from '@mui/icons-material/Add';
-import BottomNav from '../../components/BottomNav';
-import PortfolioCard from '../../components/PortfolioCard';
+} from '@/styles/dashboard';
 
 interface Portfolio {
   id: number;
   name: string;
-  description: string;
-  totalValue: number;
-  totalReturn: number;
+  // TODO: 포트폴리오 총액과 수익률 추가
 }
 
 export default function Dashboard() {
-  const { exchangeRate, fetchExchangeRate } = useExchangeRate();
-  const { data: session, status } = useSession();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [portfolioData, setPortfolioData] = useState<Portfolio[]>([]);
-  const [totalValue, setTotalValue] = useState(0);
-  const [totalReturn, setTotalReturn] = useState(0);
-  const [navValue, setNavValue] = useState(2);
-  const [activePortfolios, setActivePortfolios] = useState<Set<number>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [newPortfolioName, setNewPortfolioName] = useState('');
-  const [currency, setCurrency] = useState('KRW');
+  const [portfolioName, setPortfolioName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push('/auth/signin');
+    },
+  });
 
   useEffect(() => {
-    if (status === 'loading') return;
+    setIsMounted(true);
+  }, []);
 
-    if (status === 'unauthenticated' || !session) {
-      router.push('/auth/signin');
-      return;
+  const fetchPortfolios = async () => {
+    try {
+      const response = await fetch('/api/portfolio/list');
+      if (!response.ok) throw new Error('Failed to fetch portfolios');
+      const data = await response.json();
+      setPortfolios(data);
+    } catch (error) {
+      console.error('Error fetching portfolios:', error);
+      message.error('Failed to load portfolios');
+    } finally {
+      setIsLoading(false);
     }
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const portfolioResponse = await fetch('/api/user/portfolio');
-        const portfolioJson = await portfolioResponse.json();
-        setPortfolioData(portfolioJson);
-
-        const initialActive = new Set(portfolioJson.map((p: Portfolio) => p.id));
-        setActivePortfolios(initialActive as Set<number>);
-
-        calculateTotals(initialActive as Set<number>, portfolioJson);
-        fetchExchangeRate();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [status, session, router, fetchExchangeRate]);
-
-  const calculateTotals = (active: Set<number>, portfolios: Portfolio[]) => {
-    let valueSum = 0;
-    let returnSum = 0;
-    portfolios.forEach((portfolio) => {
-      if (active.has(portfolio.id)) {
-        valueSum += portfolio.totalValue;
-        returnSum += portfolio.totalReturn;
-      }
-    });
-    setTotalValue(valueSum);
-    setTotalReturn(returnSum);
   };
 
-  const handleToggle = (id: number, checked: boolean) => {
-    const updatedActive: Set<number> = new Set(activePortfolios);
-    if (checked) {
-      updatedActive.add(id);
-    } else {
-      updatedActive.delete(id);
+  useEffect(() => {
+    if (session) {
+      fetchPortfolios();
     }
-    setActivePortfolios(updatedActive);
-    calculateTotals(updatedActive, portfolioData);
-  };
+  }, [session]);
 
-  const handleAddPortfolio = () => {
-    setDrawerOpen(true);
+  const handleRefresh = () => {
+    setIsLoading(true);
+    fetchPortfolios();
   };
 
   const handleCreatePortfolio = async () => {
+    if (!portfolioName.trim()) {
+      message.warning('Please enter a portfolio name');
+      return;
+    }
     try {
-      const response = await fetch('/api/user/portfolio', {
+      setIsCreating(true);
+      const response = await fetch('/api/portfolio/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newPortfolioName, currency }),
+        body: JSON.stringify({ name: portfolioName }),
       });
 
-      if (response.ok) {
-        const newPortfolio = await response.json();
-        router.push(`/portfolio/${newPortfolio.id}`);
-      } else {
-        console.error('Failed to create portfolio');
+      if (!response.ok) {
+        throw new Error('Failed to create portfolio');
       }
+
+      message.success('Portfolio created successfully');
+      setDrawerOpen(false);
+      setPortfolioName('');
+      fetchPortfolios();
     } catch (error) {
       console.error('Error creating portfolio:', error);
+      message.error('Failed to create portfolio');
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  if (loading) {
+  if (!isMounted || status === 'loading' || isLoading) {
     return (
-      <Container maxWidth="xs" sx={{ mt: 4, textAlign: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <Layout>
+        <LoadingContainer>
+          <Spin size="large" />
+        </LoadingContainer>
+      </Layout>
     );
   }
 
   return (
-    <>
-      <Container maxWidth="xs" sx={{ mt: 4, px: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5" component="h1">
-            My Assets
-          </Typography>
-          <Box>
-            <IconButton onClick={fetchExchangeRate}>
-              <SyncIcon />
+    <Layout>
+      <StyledContent>
+        <HeaderContainer>
+          <StyledTitle level={2}>Portfolios</StyledTitle>
+          <ButtonContainer>
+            <IconButton onClick={handleRefresh}>
+              <ReloadOutlined />
             </IconButton>
-            <IconButton onClick={handleAddPortfolio}>
-              <AddIcon />
+            <IconButton onClick={() => setDrawerOpen(true)}>
+              <PlusOutlined />
             </IconButton>
-          </Box>
-        </Box>
-
-        <Grid container spacing={2} mb={2}>
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography variant="h4" color="primary">
-                      ₩{totalValue.toLocaleString()}
-                    </Typography>
-                    <Typography variant="subtitle2" color={totalReturn >= 0 ? 'error' : 'primary'}>
-                      Daily Profit +₩{totalReturn.toLocaleString()} (+
-                      {((totalReturn / (totalValue - totalReturn)) * 100).toFixed(2)}%)
-                    </Typography>
-                    <Typography variant="subtitle2" color={totalReturn >= 0 ? 'error' : 'primary'}>
-                      Total Profit +₩{totalReturn.toLocaleString()} (+
-                      {((totalReturn / (totalValue - totalReturn)) * 100).toFixed(2)}%)
-                    </Typography>
-                    <Typography variant="subtitle2">
-                      Exchange Rate: {exchangeRate ? `${exchangeRate} KRW` : 'Loading...'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-        <Typography variant="h6" component="h2" gutterBottom>
-          Portfolios
-        </Typography>
-
-        <Grid container spacing={2}>
-          {portfolioData.map((portfolio) => (
-            <Grid item xs={12} key={portfolio.id}>
-              <PortfolioCard portfolio={portfolio} onToggle={handleToggle} />
-            </Grid>
+          </ButtonContainer>
+        </HeaderContainer>
+        <StyledCard>
+          <TotalAmount>₩87,090,100</TotalAmount>
+          <ProfitAmount isPositive={true}>+₩1,577,263 (+1.84%)</ProfitAmount>
+        </StyledCard>
+        <Row gutter={[16, 16]}>
+          {portfolios.map((portfolio) => (
+            <Col key={portfolio.id} span={24}>
+              <StyledCard title={portfolio.name}>
+                {/* TODO: 포트폴리오 상세 정보 표시 */}
+                ₩0 (0%)
+              </StyledCard>
+            </Col>
           ))}
-        </Grid>
+        </Row>
 
-        <BottomNav value={navValue} setValue={setNavValue} />
-      </Container>
-
-      <Drawer anchor="bottom" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box p={2} width="100%" textAlign="center">
-          <Typography variant="h6">Add New Portfolio</Typography>
-          <TextField
-            label="Portfolio Name"
-            value={newPortfolioName}
-            onChange={(e) => setNewPortfolioName(e.target.value)}
-            fullWidth
-            margin="normal"
-          />
-          <ButtonGroup fullWidth>
-            <Button
-              variant={currency === 'KRW' ? 'contained' : 'outlined'}
-              onClick={() => setCurrency('KRW')}
-            >
-              KRW
-            </Button>
-            <Button
-              variant={currency === 'USD' ? 'contained' : 'outlined'}
-              onClick={() => setCurrency('USD')}
-            >
-              USD
-            </Button>
-          </ButtonGroup>
-          <Button variant="contained" onClick={handleCreatePortfolio} sx={{ mt: 2 }}>
-            Confirm
-          </Button>
-        </Box>
-      </Drawer>
-    </>
+        <CreatePortfolioDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          portfolioName={portfolioName}
+          onPortfolioNameChange={setPortfolioName}
+          onSubmit={handleCreatePortfolio}
+          isCreating={isCreating}
+        />
+      </StyledContent>
+    </Layout>
   );
 }

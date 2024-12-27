@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  background-color: #1a1d21;
+  color: #ffffff;
+}
+
+.ant-drawer-content {
+  background-color: #242830 !important;
+}
+
+.ant-drawer-header {
+  background-color: #242830 !important;
+  border-bottom: 1px solid #363c48 !important;
+}
+
+.ant-drawer-title {
+  color: #ffffff !important;
+}
+
+.ant-drawer-close {
+  color: #ffffff !important;
+}
+
+.ant-select-dropdown {
+  background-color: #242830 !important;
+}
+
+.ant-select-item {
+  color: #ffffff !important;
+}
+
+.ant-select-item-option-selected {
+  background-color: #363c48 !important;
+}
