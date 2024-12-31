@@ -1,5 +1,5 @@
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -10,7 +10,7 @@ export default function Home() {
   }
 
   if (status === 'authenticated' && session) {
-    router.push('/dashboard');
+    router.push('/portfolios');
     return null;
   } else {
     router.push('/auth/signin');

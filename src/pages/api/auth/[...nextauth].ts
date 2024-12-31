@@ -73,7 +73,7 @@ export const authOptions: AuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }: { url: any; baseUrl: any }) {
-      return `${baseUrl}/dashboard`;
+      return `${baseUrl}/portfolios`;
     },
   },
   session: {

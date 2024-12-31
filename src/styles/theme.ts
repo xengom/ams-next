@@ -2,9 +2,9 @@ import { ThemeConfig } from 'antd/es/config-provider/context';
 
 export const darkTheme: ThemeConfig = {
   token: {
-    colorPrimary: '#1677ff',
-    colorBgBase: '#1a1d21',
-    colorTextBase: '#ffffff',
+    colorPrimary: '#4E9BFF',
+    colorBgBase: '#121212',
+    colorTextBase: '#E0E0E0',
     borderRadius: 8,
   },
   components: {

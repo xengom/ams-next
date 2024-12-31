@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// #region next-auth default model
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -36,7 +37,9 @@ model Account {
 
   @@unique([provider, providerAccountId])
 }
+// #endregion
 
+// #region portfolio model
 model Portfolio {
   id          Int      @id @default(autoincrement())
   name        String
@@ -46,21 +49,32 @@ model Portfolio {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+// #endregion
+
+// #region assets model
+enum AssetType {
+  EQUITY
+  BOND
+  CASH
+  COMMODITY
+}
 
 model Asset {
   id          Int           @id @default(autoincrement())
   name        String
   symbol      String
   amount      Float
+  avgPrice    Float
+  tgtRatio    Float
+  type        AssetType
   portfolioId Int
   portfolio   Portfolio     @relation(fields: [portfolioId], references: [id])
-  latestPrice AssetPrice?  @relation(fields: [latestPriceId], references: [id])
   latestPriceId  Int         @unique
+  latestPrice AssetPrice?  @relation(fields: [latestPriceId], references: [id])
   transactions Transaction[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
-
 model AssetPrice {
   id        Int      @id @default(autoincrement())
   price     Float
@@ -79,3 +93,4 @@ model Transaction {
   asset     Asset    @relation(fields: [assetId], references: [id])
   createdAt DateTime @default(now())
 }
+// #endregion

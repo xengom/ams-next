@@ -9,20 +9,21 @@ export default withAuth(async (req: NextApiRequest, res: NextApiResponse, sessio
 
   const { name } = req.body;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
-
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+  if (!name || typeof name !== 'string') {
+    return res.status(400).json({ message: 'Portfolio name is required' });
   }
 
-  const portfolio = await prisma.portfolio.create({
-    data: {
-      name,
-      userId: session.user.id,
-    },
-  });
+  try {
+    const portfolio = await prisma.portfolio.create({
+      data: {
+        name,
+        userId: session.user.id,
+      },
+    });
 
-  return res.status(200).json(portfolio);
+    return res.status(201).json(portfolio);
+  } catch (error) {
+    console.error('Error creating portfolio:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
 });
